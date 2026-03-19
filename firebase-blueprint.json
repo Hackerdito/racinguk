@@ -1,0 +1,22 @@
+{
+  "entities": {
+    "car": {
+      "title": "Car",
+      "description": "A racing car representing a salesperson's progress",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the salesperson" },
+        "color": { "type": "string", "description": "Hex color of the car" },
+        "sales": { "type": "number", "description": "Number of sales (0-30)" },
+        "updatedAt": { "type": "number", "description": "Timestamp of last update" }
+      },
+      "required": ["name", "color", "sales", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/cars/{carId}": {
+      "schema": "car",
+      "description": "Collection of racing cars"
+    }
+  }
+}

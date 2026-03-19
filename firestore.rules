@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.token.email == "gerito.diseno@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidCar(data) {
+      return data.keys().hasAll(['name', 'color', 'sales', 'updatedAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 50 &&
+             data.color is string && data.color.matches("^#[0-9A-Fa-f]{6}$") &&
+             data.sales is number && data.sales >= 0 && data.sales <= 30 &&
+             data.updatedAt is number;
+    }
+
+    match /cars/{carId} {
+      // Anyone can read the race progress
+      allow read: if true;
+      
+      // Only admin can manage cars
+      allow create: if isAdmin() && isValidCar(request.resource.data);
+      allow update: if isAdmin() && isValidCar(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

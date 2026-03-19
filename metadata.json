@@ -1,0 +1,5 @@
+{
+  "name": "Uk Racing App",
+  "description": "Una aplicación de carrera de ventas en tiempo real donde cada venta avanza un coche en la pista de 30 casillas.",
+  "requestFramePermissions": []
+}

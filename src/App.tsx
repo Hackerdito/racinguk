@@ -323,7 +323,7 @@ export default function App() {
               <div className="bg-zinc-900 p-2 rounded-lg group-hover:scale-110 transition-transform">
                 <Trophy className="w-6 h-6 text-yellow-400" />
               </div>
-              <h1 className="text-xl font-black tracking-tighter uppercase italic">Uk Racing</h1>
+              <h1 className="text-xl font-black tracking-tighter uppercase italic">Racing Uk</h1>
             </Link>
 
             <nav className="flex items-center gap-4">

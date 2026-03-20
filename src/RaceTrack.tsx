@@ -69,26 +69,45 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({ cars }) => {
           className="opacity-30"
         />
         
-        {/* Finish Line Area (Checkered Pattern) */}
-        <g transform="translate(500, 620)">
-          <rect x="-5" y="-40" width="10" height="80" fill="white" />
+        {/* Start Line Area */}
+        <g transform="translate(400, 620)">
+          {/* Grey Border */}
+          <rect x="-22" y="-42" width="44" height="84" fill="#374151" rx="2" />
+          <rect x="-20" y="-40" width="40" height="80" fill="#4b5563" />
+          {/* Yellow Bar */}
+          <rect x="-20" y="-40" width="6" height="80" fill="#fbbf24" />
+          {/* Checkered Pattern */}
+          <rect x="-14" y="-40" width="34" height="80" fill="white" />
           {Array.from({ length: 8 }).map((_, i) => (
-            <rect 
-              key={i} 
-              x={i % 2 === 0 ? -5 : 0} 
-              y={-40 + (i * 10)} 
-              width="5" 
-              height="10" 
-              fill="black" 
-            />
+            <React.Fragment key={i}>
+              <rect x="-14" y="-40 + (i * 10)" width="17" height="10" fill={i % 2 === 0 ? "black" : "transparent"} />
+              <rect x="3" y="-40 + (i * 10)" width="17" height="10" fill={i % 2 === 0 ? "transparent" : "black"} />
+            </React.Fragment>
+          ))}
+        </g>
+
+        {/* Finish Line Area */}
+        <g transform="translate(600, 620)">
+          {/* Grey Border */}
+          <rect x="-22" y="-42" width="44" height="84" fill="#374151" rx="2" />
+          <rect x="-20" y="-40" width="40" height="80" fill="#4b5563" />
+          {/* Yellow Bar */}
+          <rect x="-20" y="-40" width="6" height="80" fill="#fbbf24" />
+          {/* Checkered Pattern */}
+          <rect x="-14" y="-40" width="34" height="80" fill="white" />
+          {Array.from({ length: 8 }).map((_, i) => (
+            <React.Fragment key={i}>
+              <rect x="-14" y="-40 + (i * 10)" width="17" height="10" fill={i % 2 === 0 ? "black" : "transparent"} />
+              <rect x="3" y="-40 + (i * 10)" width="17" height="10" fill={i % 2 === 0 ? "transparent" : "black"} />
+            </React.Fragment>
           ))}
         </g>
 
         {/* Start/Finish Labels */}
-        <text x="515" y="605" fill="white" fontSize="12" fontWeight="black" className="italic uppercase tracking-tighter select-none">
+        <text x="580" y="565" fill="white" fontSize="14" fontWeight="black" className="italic uppercase tracking-tighter select-none text-center">
           Finish
         </text>
-        <text x="440" y="605" fill="white" fontSize="12" fontWeight="black" className="italic uppercase tracking-tighter select-none">
+        <text x="380" y="565" fill="white" fontSize="14" fontWeight="black" className="italic uppercase tracking-tighter select-none text-center">
           Start
         </text>
 

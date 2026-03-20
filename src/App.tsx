@@ -4,9 +4,9 @@ import { RaceTrack } from './RaceTrack';
 import { AdminPanel } from './AdminPanel';
 import { Leaderboard } from './Leaderboard';
 import { Car, COLORS } from './types';
-import { Trophy, Settings, LayoutDashboard, LogIn, LogOut, AlertCircle, ChevronRight, User } from 'lucide-react';
+import { Trophy, Settings, LayoutDashboard, LogIn, LogOut, AlertCircle, ChevronRight, User, Mail, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { auth, db, loginWithGoogle, logout } from './firebase';
+import { auth, db, loginWithGoogle, logout, signInWithEmailAndPassword } from './firebase';
 import { 
   collection, 
   onSnapshot, 
@@ -15,7 +15,8 @@ import {
   deleteDoc, 
   doc, 
   query, 
-  orderBy 
+  orderBy,
+  getDoc
 } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
@@ -42,7 +43,7 @@ const RaceView = ({ cars }: { cars: Car[] }) => {
             <div className="flex flex-col">
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest leading-none mb-1">Líder Actual</span>
               <span className="font-black text-xl tracking-tight uppercase italic">
-                {cars.length > 0 ? cars[0].name : '---'}
+                {cars.length > 0 ? [...cars].sort((a, b) => b.sales - a.sales)[0].name : '---'}
               </span>
             </div>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-yellow-400 shadow-inner">
@@ -81,13 +82,20 @@ const RaceView = ({ cars }: { cars: Car[] }) => {
 };
 
 // --- LOGIN VIEW COMPONENT ---
-const LoginView = ({ user, handleLogin, handleLogout }: { 
+const LoginView = ({ user, handleLogin, handleLogout, handleEmailLogin }: { 
   user: FirebaseUser | null; 
   handleLogin: () => void; 
   handleLogout: () => void;
+  handleEmailLogin: (e: string, p: string) => void;
 }) => {
-  const isAdmin = user?.email === 'gerito.diseno@gmail.com';
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
+
+  const onEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleEmailLogin(email, password);
+  };
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center">
@@ -104,26 +112,20 @@ const LoginView = ({ user, handleLogin, handleLogout }: {
         {user ? (
           <div className="space-y-6">
             <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 flex items-center gap-4">
-              <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-12 h-12 rounded-full border border-white shadow-sm" />
+              {user.photoURL && <img src={user.photoURL} alt={user.displayName || ''} className="w-12 h-12 rounded-full border border-white shadow-sm" />}
               <div className="text-left">
-                <div className="font-bold text-zinc-900">{user.displayName}</div>
+                <div className="font-bold text-zinc-900">{user.displayName || user.email}</div>
                 <div className="text-xs text-zinc-500 font-medium">{user.email}</div>
               </div>
             </div>
 
-            {isAdmin ? (
-              <button
-                onClick={() => navigate('/admin')}
-                className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-zinc-800 transition-all shadow-lg"
-              >
-                Ir al Panel de Control
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            ) : (
-              <div className="p-4 bg-red-50 text-red-600 rounded-2xl text-xs font-bold uppercase tracking-widest border border-red-100">
-                Acceso restringido. Solo administradores autorizados.
-              </div>
-            )}
+            <button
+              onClick={() => navigate('/admin')}
+              className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-zinc-800 transition-all shadow-lg"
+            >
+              Ir al Panel de Control
+              <ChevronRight className="w-5 h-5" />
+            </button>
 
             <button
               onClick={handleLogout}
@@ -133,13 +135,57 @@ const LoginView = ({ user, handleLogin, handleLogout }: {
             </button>
           </div>
         ) : (
-          <button
-            onClick={handleLogin}
-            className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-indigo-700 transition-all shadow-lg"
-          >
-            <LogIn className="w-6 h-6" />
-            Ingresar con Google
-          </button>
+          <div className="space-y-6">
+            <form onSubmit={onEmailSubmit} className="space-y-4 text-left">
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1 ml-1">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl border border-zinc-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    placeholder="admin@ukracing.com"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1 ml-1">Contraseña</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl border border-zinc-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-zinc-800 transition-all shadow-lg"
+              >
+                Ingresar
+              </button>
+            </form>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-zinc-200"></div></div>
+              <div className="relative flex justify-center text-xs uppercase font-bold text-zinc-400"><span className="bg-white px-2">O</span></div>
+            </div>
+
+            <button
+              onClick={handleLogin}
+              className="w-full py-4 bg-white border border-zinc-200 text-zinc-900 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-zinc-50 transition-all shadow-sm"
+            >
+              <LogIn className="w-6 h-6" />
+              Google (Solo Principal)
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -151,11 +197,23 @@ export default function App() {
   const [cars, setCars] = useState<Car[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   // Auth State Listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        // Check if authorized (main admin or in admins collection)
+        if (currentUser.email === 'gerito.diseno@gmail.com') {
+          setIsAuthorized(true);
+        } else {
+          const adminDoc = await getDoc(doc(db, 'admins', currentUser.uid));
+          setIsAuthorized(adminDoc.exists());
+        }
+      } else {
+        setIsAuthorized(false);
+      }
       setIsLoading(false);
     });
     return () => unsubscribe();
@@ -163,7 +221,8 @@ export default function App() {
 
   // Real-time Firestore Listener
   useEffect(() => {
-    const q = query(collection(db, 'cars'), orderBy('sales', 'desc'));
+    // Fixed order: as they were added (createdAt asc)
+    const q = query(collection(db, 'cars'), orderBy('createdAt', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const carsData = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -186,6 +245,7 @@ export default function App() {
         color,
         sales: 0,
         updatedAt: Date.now(),
+        createdAt: Date.now(), // Fixed order field
       });
     } catch (err) {
       setError("No tienes permisos para agregar corredores.");
@@ -222,6 +282,14 @@ export default function App() {
     }
   };
 
+  const handleEmailLogin = async (e: string, p: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, e, p);
+    } catch (err: any) {
+      setError("Error de login: " + err.message);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -230,7 +298,7 @@ export default function App() {
     }
   };
 
-  const isAdmin = user?.email === 'gerito.diseno@gmail.com';
+  const isMainAdmin = user?.email === 'gerito.diseno@gmail.com';
 
   if (isLoading) {
     return (
@@ -267,7 +335,7 @@ export default function App() {
                 Pista
               </Link>
               
-              {isAdmin ? (
+              {isAuthorized ? (
                 <Link
                   to="/admin"
                   className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm bg-zinc-900 text-white transition-all shadow-md"
@@ -291,11 +359,11 @@ export default function App() {
         <main className="max-w-7xl mx-auto px-4 py-8">
           <Routes>
             <Route path="/" element={<RaceView cars={cars} />} />
-            <Route path="/login" element={<LoginView user={user} handleLogin={handleLogin} handleLogout={handleLogout} />} />
+            <Route path="/login" element={<LoginView user={user} handleLogin={handleLogin} handleLogout={handleLogout} handleEmailLogin={handleEmailLogin} />} />
             <Route 
               path="/admin" 
               element={
-                isAdmin ? (
+                isAuthorized ? (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -309,6 +377,7 @@ export default function App() {
                       onAddCar={handleAddCar}
                       onUpdateSales={handleUpdateSales}
                       onDeleteCar={handleDeleteCar}
+                      isMainAdmin={isMainAdmin}
                     />
                   </motion.div>
                 ) : (

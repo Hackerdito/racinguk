@@ -1,22 +1,37 @@
 {
   "entities": {
-    "car": {
+    "Car": {
       "title": "Car",
-      "description": "A racing car representing a salesperson's progress",
+      "description": "A race car representing a salesperson's progress.",
       "type": "object",
       "properties": {
-        "name": { "type": "string", "description": "Name of the salesperson" },
-        "color": { "type": "string", "description": "Hex color of the car" },
-        "sales": { "type": "number", "description": "Number of sales (0-30)" },
-        "updatedAt": { "type": "number", "description": "Timestamp of last update" }
+        "name": { "type": "string", "description": "The name of the salesperson." },
+        "color": { "type": "string", "description": "The hex color of the car." },
+        "sales": { "type": "integer", "description": "The number of sales (0-30)." },
+        "updatedAt": { "type": "integer", "description": "Timestamp of the last update." },
+        "createdAt": { "type": "integer", "description": "Timestamp of creation." }
       },
-      "required": ["name", "color", "sales", "updatedAt"]
+      "required": ["name", "color", "sales", "updatedAt", "createdAt"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "An authorized administrator.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "description": "The email of the admin." },
+        "role": { "type": "string", "enum": ["admin", "main_admin"], "description": "The role of the admin." }
+      },
+      "required": ["email", "role"]
     }
   },
   "firestore": {
     "/cars/{carId}": {
-      "schema": "car",
-      "description": "Collection of racing cars"
+      "schema": "Car",
+      "description": "Collection of race cars."
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Collection of authorized administrators."
     }
   }
 }

@@ -1,10 +1,9 @@
 {
-  "projectId": "bardev-417ea",
-  "appId": "1:556904023038:web:6c7a2b33459645785176af",
-  "apiKey": "AIzaSyB-ZL45w9EcN1Gev9soPc4uFIeDCtCooJE",
-  "authDomain": "bardev-417ea.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-db24c2ba-f265-4129-8c0d-e54b8af98737",
-  "storageBucket": "bardev-417ea.firebasestorage.app",
-  "messagingSenderId": "556904023038",
-  "measurementId": ""
+  "projectId": "rancing-e42b5",
+  "appId": "1:167046785355:web:74c2c6b03cc5cbf12a20ce",
+  "apiKey": "AIzaSyCrgDlZhW9cj6yBB3Vn-_bus7a47rdLsAs",
+  "authDomain": "rancing-e42b5.firebaseapp.com",
+  "storageBucket": "rancing-e42b5.firebasestorage.app",
+  "messagingSenderId": "167046785355",
+  "measurementId": "G-V6SXG3C31E"
 }

@@ -1,33 +1,71 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: cars
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required) - Salesperson name
+    //   - color: string (required) - Car hex color
+    //   - sales: number (required) - Current sales (0-30)
+    //   - updatedAt: number (required) - Last update timestamp
+    //   - createdAt: number (required) - Creation timestamp
+    //
+    // Collection: admins
+    // Document ID: user UID
+    // Fields:
+    //   - email: string (required) - Admin email
+    //   - role: string (required) - 'admin' or 'main_admin'
+    //
+    // ===============================================================
+
     // Helper Functions
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isAdmin() {
+    function isMainAdmin() {
       return isAuthenticated() && 
         (request.auth.token.email == "gerito.diseno@gmail.com" && request.auth.token.email_verified == true);
     }
 
-    function isValidCar(data) {
-      return data.keys().hasAll(['name', 'color', 'sales', 'updatedAt']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 50 &&
-             data.color is string && data.color.matches("^#[0-9A-Fa-f]{6}$") &&
-             data.sales is number && data.sales >= 0 && data.sales <= 30 &&
-             data.updatedAt is number;
+    function isAdmin() {
+      return isMainAdmin() || 
+        (isAuthenticated() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
 
+    // Domain Validators
+    function isValidCar(data) {
+      return data.keys().hasAll(['name', 'color', 'sales', 'updatedAt', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.color is string && data.color.matches('^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$') &&
+             data.sales is number && data.sales >= 0 && data.sales <= 30 &&
+             data.updatedAt is number &&
+             data.createdAt is number;
+    }
+
+    function isValidAdmin(data) {
+      return data.keys().hasAll(['email', 'role']) &&
+             data.email is string && data.email.size() > 0 &&
+             data.role in ['admin', 'main_admin'];
+    }
+
+    // Rules
     match /cars/{carId} {
-      // Anyone can read the race progress
-      allow read: if true;
-      
-      // Only admin can manage cars
+      allow read: if true; // Public can see the race
       allow create: if isAdmin() && isValidCar(request.resource.data);
       allow update: if isAdmin() && isValidCar(request.resource.data);
       allow delete: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow read: if isAuthenticated() && (request.auth.uid == adminId || isMainAdmin());
+      allow create: if isMainAdmin() && isValidAdmin(request.resource.data);
+      allow update: if isMainAdmin() && isValidAdmin(request.resource.data);
+      allow delete: if isMainAdmin();
     }
   }
 }

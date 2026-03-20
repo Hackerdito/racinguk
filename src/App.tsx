@@ -368,9 +368,18 @@ export default function App() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                   >
-                    <div className="mb-8">
-                      <h2 className="text-3xl font-black tracking-tight text-zinc-900 uppercase italic">Panel de Control</h2>
-                      <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Gestiona los corredores y actualiza los resultados.</p>
+                    <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <h2 className="text-3xl font-black tracking-tight text-zinc-900 uppercase italic">Panel de Control</h2>
+                        <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Gestiona los corredores y actualiza los resultados.</p>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 px-6 py-3 bg-white border border-zinc-200 text-zinc-600 rounded-2xl font-bold uppercase tracking-widest hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Cerrar Sesión
+                      </button>
                     </div>
                     <AdminPanel
                       cars={cars}

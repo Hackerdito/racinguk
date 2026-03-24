@@ -16,7 +16,9 @@ import {
   doc, 
   query, 
   orderBy,
-  getDoc
+  getDoc,
+  setDoc,
+  writeBatch
 } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
@@ -29,7 +31,7 @@ const ErrorDisplay = ({ message }: { message: string }) => (
 );
 
 // --- MAIN RACE VIEW COMPONENT ---
-const RaceView = ({ cars }: { cars: Car[] }) => {
+const RaceView = ({ cars, goal }: { cars: Car[], goal: number }) => {
   return (
     <div className="flex flex-col lg:flex-row gap-8 h-full">
       {/* Main Track Area */}
@@ -37,7 +39,7 @@ const RaceView = ({ cars }: { cars: Car[] }) => {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h2 className="text-5xl font-black tracking-tighter text-zinc-900 uppercase italic">Circuito de ventas</h2>
-            <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Cada venta es un paso hacia la meta de 30.</p>
+            <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Cada venta es un paso hacia la meta de {goal}.</p>
           </div>
           <div className="bg-white px-6 py-3 rounded-2xl border border-zinc-200 shadow-sm flex items-center gap-4">
             <div className="flex flex-col">
@@ -52,7 +54,7 @@ const RaceView = ({ cars }: { cars: Car[] }) => {
           </div>
         </div>
 
-        <RaceTrack cars={cars} />
+        <RaceTrack cars={cars} goal={goal} />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -75,7 +77,7 @@ const RaceView = ({ cars }: { cars: Car[] }) => {
 
       {/* Sidebar Leaderboard */}
       <div className="flex-1 lg:max-w-sm">
-        <Leaderboard cars={cars} />
+        <Leaderboard cars={cars} goal={goal} />
       </div>
     </div>
   );
@@ -195,6 +197,7 @@ const LoginView = ({ user, handleLogin, handleLogout, handleEmailLogin }: {
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [cars, setCars] = useState<Car[]>([]);
+  const [goal, setGoal] = useState<number>(30);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -219,9 +222,8 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Real-time Firestore Listener
+  // Real-time Firestore Listener for Cars
   useEffect(() => {
-    // Fixed order: as they were added (createdAt asc)
     const q = query(collection(db, 'cars'), orderBy('createdAt', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const carsData = snapshot.docs.map(doc => ({
@@ -235,6 +237,16 @@ export default function App() {
       setError("Error al sincronizar datos. Verifica tu conexión.");
     });
 
+    return () => unsubscribe();
+  }, []);
+
+  // Real-time Firestore Listener for Settings (Goal)
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'settings', 'config'), (docSnap) => {
+      if (docSnap.exists() && docSnap.data().goal) {
+        setGoal(docSnap.data().goal);
+      }
+    });
     return () => unsubscribe();
   }, []);
 
@@ -264,6 +276,37 @@ export default function App() {
     }
   };
 
+  const handleUpdateGoal = async (newGoal: number) => {
+    try {
+      await setDoc(doc(db, 'settings', 'config'), { goal: newGoal }, { merge: true });
+    } catch (err) {
+      setError("Error al actualizar la meta.");
+    }
+  };
+
+  const handleCutoff = async (weekName: string) => {
+    try {
+      // 1. Save the report
+      const report = {
+        weekName,
+        date: Date.now(),
+        goal,
+        results: cars.map(c => ({ name: c.name, sales: c.sales, color: c.color }))
+      };
+      await addDoc(collection(db, 'reports'), report);
+
+      // 2. Reset all car sales to 0
+      const batch = writeBatch(db);
+      cars.forEach(car => {
+        batch.update(doc(db, 'cars', car.id), { sales: 0 });
+      });
+      await batch.commit();
+      
+      alert('Corte semanal generado y ventas reiniciadas.');
+    } catch (err) {
+      setError("Error al generar el corte semanal.");
+    }
+  };
   const handleDeleteCar = async (id: string) => {
     if (confirm('¿Estás seguro de eliminar este corredor?')) {
       try {
@@ -358,7 +401,7 @@ export default function App() {
 
         <main className="max-w-7xl mx-auto px-4 py-8">
           <Routes>
-            <Route path="/" element={<RaceView cars={cars} />} />
+            <Route path="/" element={<RaceView cars={cars} goal={goal} />} />
             <Route path="/login" element={<LoginView user={user} handleLogin={handleLogin} handleLogout={handleLogout} handleEmailLogin={handleEmailLogin} />} />
             <Route 
               path="/admin" 
@@ -383,9 +426,12 @@ export default function App() {
                     </div>
                     <AdminPanel
                       cars={cars}
+                      goal={goal}
                       onAddCar={handleAddCar}
                       onUpdateSales={handleUpdateSales}
                       onDeleteCar={handleDeleteCar}
+                      onUpdateGoal={handleUpdateGoal}
+                      onCutoff={handleCutoff}
                       isMainAdmin={isMainAdmin}
                     />
                   </motion.div>

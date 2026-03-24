@@ -1,12 +1,13 @@
 import React from 'react';
-import { Car, TRACK_SLOTS } from './types';
+import { Car } from './types';
 import { Trophy, Medal, TrendingUp } from 'lucide-react';
 
 interface LeaderboardProps {
   cars: Car[];
+  goal: number;
 }
 
-export const Leaderboard: React.FC<LeaderboardProps> = ({ cars }) => {
+export const Leaderboard: React.FC<LeaderboardProps> = ({ cars, goal }) => {
   const sortedCars = [...cars].sort((a, b) => b.sales - a.sales);
 
   return (
@@ -44,19 +45,19 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ cars }) => {
               <div className="font-bold text-zinc-900 truncate">{car.name}</div>
               <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase">
                 <TrendingUp className="w-3 h-3" />
-                {car.sales} / {TRACK_SLOTS} Ventas
+                {car.sales} / {goal} Ventas
               </div>
             </div>
 
             {/* Progress % */}
             <div className="text-right">
               <div className="text-xs font-black text-zinc-900">
-                {Math.round((car.sales / TRACK_SLOTS) * 100)}%
+                {Math.round((car.sales / goal) * 100)}%
               </div>
               <div className="w-12 h-1 bg-zinc-200 rounded-full mt-1 overflow-hidden">
                 <div 
                   className="h-full bg-zinc-900 transition-all duration-500" 
-                  style={{ width: `${(car.sales / TRACK_SLOTS) * 100}%` }} 
+                  style={{ width: `${Math.min(100, (car.sales / goal) * 100)}%` }} 
                 />
               </div>
             </div>
@@ -76,7 +77,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ cars }) => {
       {/* Footer Info */}
       <div className="p-4 bg-zinc-50 border-t border-zinc-100 text-center">
         <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-          Meta: 30 Ventas Mensuales
+          Meta: {goal} Ventas
         </div>
       </div>
     </div>

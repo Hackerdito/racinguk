@@ -1,15 +1,16 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Car, TRACK_SLOTS } from './types';
+import { Car } from './types';
 
 interface RaceTrackProps {
   cars: Car[];
+  goal: number;
 }
 
 // A non-crossing path inspired by the user's image
 const TRACK_PATH = "M 500,620 L 250,620 C 100,620 100,500 100,400 L 100,150 C 100,50 250,50 350,50 L 450,50 C 550,50 550,250 650,250 C 750,250 750,50 850,50 C 950,50 950,150 950,250 L 950,500 C 950,620 850,620 750,620 L 500,620 Z";
 
-export const RaceTrack: React.FC<RaceTrackProps> = ({ cars }) => {
+export const RaceTrack: React.FC<RaceTrackProps> = ({ cars, goal }) => {
   return (
     <div className="relative w-full aspect-[16/9] bg-emerald-600 rounded-[40px] p-4 shadow-inner overflow-hidden border-[12px] border-emerald-700">
       {/* Grass/Background details */}
@@ -112,23 +113,23 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({ cars }) => {
         </text>
 
         {/* Cars on Path */}
-        {cars.map((car) => (
-          <CarMarker key={car.id} car={car} />
+        {cars.map((car, index) => (
+          <CarMarker key={car.id} car={car} index={index} goal={goal} />
         ))}
       </svg>
     </div>
   );
 };
 
-const CarMarker: React.FC<{ car: Car }> = ({ car }) => {
+const CarMarker: React.FC<{ car: Car, index: number, goal: number }> = ({ car, index, goal }) => {
   const pathRef = React.useRef<SVGPathElement>(null);
   const [point, setPoint] = React.useState({ x: 50, y: 250, angle: 0 });
 
   React.useEffect(() => {
     if (pathRef.current) {
       const length = pathRef.current.getTotalLength();
-      // Calculate position along path (0 to 1)
-      const progress = car.sales / TRACK_SLOTS;
+      // Calculate position along path (0 to 1) based on dynamic goal
+      const progress = Math.min(1, car.sales / goal);
       // We want them to start at the beginning and end at the end
       const distance = length * progress;
       
@@ -139,7 +140,11 @@ const CarMarker: React.FC<{ car: Car }> = ({ car }) => {
       
       setPoint({ x: p.x, y: p.y, angle });
     }
-  }, [car.sales]);
+  }, [car.sales, goal]);
+
+  // Calculate a deterministic Y offset to prevent overlapping
+  // We use the car's index to stagger them vertically slightly
+  const yOffset = (index % 3) * 12 - 12;
 
   return (
     <>
@@ -147,7 +152,7 @@ const CarMarker: React.FC<{ car: Car }> = ({ car }) => {
       <path ref={pathRef} d={TRACK_PATH} fill="none" stroke="none" />
       
       <motion.g
-        animate={{ x: point.x, y: point.y, rotate: point.angle }}
+        animate={{ x: point.x, y: point.y + yOffset, rotate: point.angle }}
         transition={{ type: 'spring', stiffness: 40, damping: 12 }}
       >
         {/* Car Shadow */}

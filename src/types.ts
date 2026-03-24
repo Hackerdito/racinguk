@@ -2,11 +2,23 @@ export interface Car {
   id: string;
   name: string;
   color: string;
-  sales: number; // 0 to 30
+  sales: number;
   updatedAt: number;
 }
 
-export const TRACK_SLOTS = 30;
+export interface Report {
+  id: string;
+  weekName: string;
+  date: number;
+  goal: number;
+  results: {
+    name: string;
+    sales: number;
+    color: string;
+  }[];
+}
+
+export const DEFAULT_TRACK_SLOTS = 30;
 export const COLORS = [
   '#FF3B30', // Red
   '#FF9500', // Orange

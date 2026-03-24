@@ -17,6 +17,7 @@ interface AdminPanelProps {
   onUpdateGoal: (goal: number) => void;
   onCutoff: (weekName: string) => void;
   isMainAdmin: boolean;
+  isAdmin: boolean;
 }
 
 interface AdminUser {
@@ -25,7 +26,7 @@ interface AdminUser {
   role: string;
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ cars, goal, onAddCar, onUpdateSales, onDeleteCar, onUpdateGoal, onCutoff, isMainAdmin }) => {
+export const AdminPanel: React.FC<AdminPanelProps> = ({ cars, goal, onAddCar, onUpdateSales, onDeleteCar, onUpdateGoal, onCutoff, isMainAdmin, isAdmin }) => {
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState(COLORS[0]);
   const [newGoal, setNewGoal] = useState(goal.toString());
@@ -47,6 +48,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ cars, goal, onAddCar, on
           ...doc.data()
         })) as AdminUser[];
         setAdmins(adminData);
+      }, (error) => {
+        console.error("Error fetching admins:", error);
       });
       return () => unsubscribe();
     }
@@ -57,6 +60,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ cars, goal, onAddCar, on
   }, [goal]);
 
   useEffect(() => {
+    if (!isMainAdmin && !isAdmin) return;
+
     const q = query(collection(db, 'reports'), orderBy('date', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const reportsData = snapshot.docs.map(doc => ({
@@ -64,9 +69,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ cars, goal, onAddCar, on
         ...doc.data()
       })) as Report[];
       setReports(reportsData);
+    }, (error) => {
+      console.error("Error fetching reports:", error);
     });
     return () => unsubscribe();
-  }, []);
+  }, [isMainAdmin, isAdmin]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

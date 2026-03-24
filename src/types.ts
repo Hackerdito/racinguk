@@ -29,7 +29,7 @@ export const COLORS = [
   '#5856D6', // Purple
   '#FF2D55', // Pink
   '#AF52DE', // Violet
-  '#FFCC00', // Gold
+  '#FFD700', // Gold (changed from #FFCC00)
   '#8E8E93', // Gray
   '#C69C6D', // Tan
   '#FF375F', // Rose
@@ -42,10 +42,10 @@ export const COLORS = [
   '#32D74B', // Emerald
   '#FFD60A', // Lemon
   '#66D4CF', // Teal
-  '#FF375F', // Magenta
+  '#D81B60', // Magenta (changed from #FF375F)
   '#AC8E68', // Bronze
   '#5E5CE6', // Indigo
-  '#FF2D55', // Crimson
+  '#DC143C', // Crimson (changed from #FF2D55)
   '#7D7D7D', // Slate
   '#E5E5EA', // Silver
   '#1C1C1E', // Dark

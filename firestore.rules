@@ -29,7 +29,8 @@ service cloud.firestore {
 
     function isMainAdmin() {
       return isAuthenticated() && 
-        (request.auth.token.email == "gerito.diseno@gmail.com" && request.auth.token.email_verified == true);
+        ('email' in request.auth.token) &&
+        (request.auth.token.email == "gerito.diseno@gmail.com");
     }
 
     function isAdmin() {
@@ -42,7 +43,7 @@ service cloud.firestore {
       return data.keys().hasAll(['name', 'color', 'sales', 'updatedAt', 'createdAt']) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.color is string && data.color.matches('^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$') &&
-             data.sales is number && data.sales >= 0 && data.sales <= 30 &&
+             data.sales is number && data.sales >= 0 && data.sales <= 10000 &&
              data.updatedAt is number &&
              data.createdAt is number;
     }
@@ -51,6 +52,19 @@ service cloud.firestore {
       return data.keys().hasAll(['email', 'role']) &&
              data.email is string && data.email.size() > 0 &&
              data.role in ['admin', 'main_admin'];
+    }
+
+    function isValidSettings(data) {
+      return data.keys().hasAll(['goal']) &&
+             data.goal is number && data.goal > 0 && data.goal <= 10000;
+    }
+
+    function isValidReport(data) {
+      return data.keys().hasAll(['weekName', 'date', 'goal', 'results']) &&
+             data.weekName is string && data.weekName.size() > 0 && data.weekName.size() < 100 &&
+             data.date is number &&
+             data.goal is number && data.goal > 0 &&
+             data.results is list;
     }
 
     // Rules
@@ -65,6 +79,19 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (request.auth.uid == adminId || isMainAdmin());
       allow create: if isMainAdmin() && isValidAdmin(request.resource.data);
       allow update: if isMainAdmin() && isValidAdmin(request.resource.data);
+      allow delete: if isMainAdmin();
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidSettings(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && isValidReport(request.resource.data);
+      allow update: if false; // Reports should be immutable
       allow delete: if isMainAdmin();
     }
   }

@@ -246,6 +246,8 @@ export default function App() {
       if (docSnap.exists() && docSnap.data().goal) {
         setGoal(docSnap.data().goal);
       }
+    }, (error) => {
+      console.error("Error fetching settings:", error);
     });
     return () => unsubscribe();
   }, []);
@@ -298,7 +300,10 @@ export default function App() {
       // 2. Reset all car sales to 0
       const batch = writeBatch(db);
       cars.forEach(car => {
-        batch.update(doc(db, 'cars', car.id), { sales: 0 });
+        batch.update(doc(db, 'cars', car.id), { 
+          sales: 0,
+          updatedAt: Date.now()
+        });
       });
       await batch.commit();
       
@@ -433,6 +438,7 @@ export default function App() {
                       onUpdateGoal={handleUpdateGoal}
                       onCutoff={handleCutoff}
                       isMainAdmin={isMainAdmin}
+                      isAdmin={isAuthorized}
                     />
                   </motion.div>
                 ) : (
